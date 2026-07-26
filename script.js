@@ -18,6 +18,7 @@ function loginWithRoblox() {
     const authUrl = `https://apis.roblox.com/oauth/v1/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=openid%20profile`;
     window.location.href = authUrl;
 }
+}
 
 // Process OAuth Code returning from Roblox redirect
 async function handleOAuthCallback() {
