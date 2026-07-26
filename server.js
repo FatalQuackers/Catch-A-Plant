@@ -1,97 +1,73 @@
-require('dotenv').config(); // <-- ADD THIS AT THE VERY TOP
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 
 const app = express();
-const PORT = 5000;
 
-// Enable CORS so your frontend (e.g. port 5500, 3000) can talk to port 5000
-app.use(cors({
-    origin: '*',
-    credentials: true
-}));
-
+// Enable CORS so your GitHub Pages frontend can access this backend
+app.use(cors());
 app.use(express.json());
 
-// Optionally serve static frontend files if accessed directly on port 5000
-app.use(express.static(path.join(__dirname)));
+const CLIENT_ID = process.env.ROBLOX_CLIENT_ID;
+const CLIENT_SECRET = process.env.ROBLOX_CLIENT_SECRET;
 
-// Roblox OAuth Configuration
-const ROBLOX_CLIENT_ID = '4037165407323325158';
-// Add your Client Secret here from Roblox Creator Dashboard (if generated)
-const ROBLOX_CLIENT_SECRET = process.env.ROBLOX_CLIENT_SECRET || ''; 
+// Health check endpoint
+app.get('/', (req, res) => {
+    res.send('PlayGarp Backend is Live!');
+});
 
-// API Endpoint hit by handleOAuthCallback() in nav.js
-app.post('/api/auth/roblox', async (req, res) => {
-    const { code } = req.body;
+// OAuth Callback / Token Exchange Endpoint
+app.post('/api/oauth/callback', async (req, res) => {
+    const { code, redirect_uri } = req.body;
 
     if (!code) {
-        return res.status(400).json({ error: 'Authorization code is missing.' });
+        return res.status(400).json({ error: 'Missing authorization code' });
     }
 
     try {
-        // Build redirect URI matching what was sent during the initial auth request
-        const redirectUri = req.headers.referer || 'http://localhost:5500/';
-        const cleanRedirectUri = new URL(redirectUri).origin + '/';
-
-        console.log(`[OAuth] Swapping code for token with redirect URI: ${cleanRedirectUri}`);
-
-        // Token exchange payload
-        const params = new URLSearchParams({
-            client_id: ROBLOX_CLIENT_ID,
-            client_secret: ROBLOX_CLIENT_SECRET,
+        // 1. Exchange code for OAuth token
+        const tokenParams = new URLSearchParams({
+            client_id: CLIENT_ID,
+            client_secret: CLIENT_SECRET,
             grant_type: 'authorization_code',
             code: code,
-            redirect_uri: cleanRedirectUri
+            redirect_uri: redirect_uri
         });
 
-        // Exchange authorization code for user access token with Roblox
         const tokenResponse = await fetch('https://apis.roblox.com/oauth/v1/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: params
+            body: tokenParams
         });
 
         const tokenData = await tokenResponse.json();
 
         if (!tokenResponse.ok) {
-            console.error('[OAuth Error] Roblox token exchange failed:', tokenData);
-            return res.status(400).json({ 
-                error: tokenData.error_description || tokenData.error || 'Roblox token exchange failed' 
-            });
+            console.error('Roblox Token Error:', tokenData);
+            return res.status(tokenResponse.status).json(tokenData);
         }
 
-        // Fetch User Info using access token
-        const userInfoResponse = await fetch('https://apis.roblox.com/oauth/v1/userinfo', {
-            headers: { Authorization: `Bearer ${tokenData.access_token}` }
+        // 2. Get User Profile Info using Access Token
+        const userResponse = await fetch('https://apis.roblox.com/oauth/v1/userinfo', {
+            headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
         });
 
-        const userInfo = await userInfoResponse.json();
+        const userData = await userResponse.json();
 
-        if (!userInfoResponse.ok) {
-            console.error('[OAuth Error] Fetching user info failed:', userInfo);
-            return res.status(400).json({ error: 'Failed to fetch Roblox profile' });
-        }
-
-        console.log(`[OAuth Success] User authenticated: ${userInfo.preferred_username || userInfo.name}`);
-
-        return res.json({
-            username: userInfo.preferred_username || userInfo.name || 'Roblox Player',
-            displayName: userInfo.nickname || userInfo.name || 'Player',
-            sub: userInfo.sub,
-            avatarUrl: userInfo.picture || ''
+        // 3. Send token and user data back to frontend
+        res.json({
+            access_token: tokenData.access_token,
+            user: userData
         });
 
     } catch (err) {
-        console.error('[Server Error]', err);
-        return res.status(500).json({ error: 'Internal server error during authentication' });
+        console.error('Server error during OAuth exchange:', err);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
+// Dynamic port assignment for Render hosting
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`\n========================================`);
-    console.log(`🚀 Roblox Hub Backend Server Online!`);
-    console.log(`🌐 Running on: http://localhost:${PORT}`);
-    console.log(`========================================\n`);
+    console.log(`Server listening on port ${PORT}`);
 });
