@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grow A Random Plant Hub</title>
+    
+    <!-- Fonts & Lucide Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-dark-energized">
+
+    <!-- Ambient Glow & Particles -->
+    <div class="animated-bg-overlay">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+        <div class="glow-orb orb-3"></div>
+        <div class="particle p1">🌱</div>
+        <div class="particle p2">✨</div>
+        <div class="particle p3">🌸</div>
+        <div class="particle p4">🍃</div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- BGM Player Widget -->
+    <div class="music-player-widget">
+        <button class="music-toggle-btn" id="musicPlayBtn" onclick="toggleBGM()" title="Play BGM">
+            <i data-lucide="music" id="musicIcon"></i>
+        </button>
+        <div class="music-info">
+            <span class="track-title" id="trackTitle">Garden Chill Beats</span>
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.3" oninput="changeVolume(this.value)">
+        </div>
+        <audio id="bgmAudio" loop src="assets/music.mp3"></audio>
+    </div>
+
+    <!-- Glassmorphic Header Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <div class="profile-badge" onclick="connectRobloxAccount()">
+                    <div class="profile-avatar" id="navAvatarContainer">
+                        <img src="assets/logo.png" alt="Logo" class="badge-logo-img" onerror="this.src='GameLogo.png'; this.onerror=null;">
+                    </div>
+                    <span class="username" id="navUsername">CONNECT ROBLOX</span>
+                </div>
+            </div>
+
+            <div class="nav-right">
+                <button class="nav-btn icon-only" title="Toggle Light/Dark Mode" onclick="toggleThemeMode()">
+                    <i data-lucide="sun" id="themeIcon"></i>
+                </button>
+                <button class="nav-btn icon-only" title="Home Portal" onclick="showPage('portal-page')">
+                    <i data-lucide="home"></i>
+                </button>
+                <button class="nav-btn login-btn" onclick="showPage('account-page')">
+                    <i data-lucide="box"></i> <span>Account</span>
+                </button>
+                <button class="nav-btn icon-only" title="Toggle Sound FX" onclick="toggleSound()">
+                    <i data-lucide="volume-2" id="soundIcon"></i>
+                </button>
+                <button class="nav-btn lang-btn" title="Language" onclick="toggleLanguage()">
+                    <i data-lucide="globe"></i>
+                    <span id="langText">US</span>
+                </button>
+                <button class="nav-btn icon-only menu-trigger" title="Menu" onclick="toggleMenuDrawer()">
+                    <i data-lucide="menu"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Slide-Out Glass Menu -->
+    <div id="menuDrawer" class="menu-drawer">
+        <div class="drawer-content-wrapper">
+            <div class="drawer-header">
+                <div class="drawer-brand">
+                    <span class="drawer-logo-glow">🌱</span>
+                    <h2>GARDEN HUB</h2>
+                </div>
+                <button class="close-drawer-btn" onclick="toggleMenuDrawer()" title="Close Menu">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="drawer-nav-list">
+                <button class="drawer-item" onclick="showPage('portal-page'); toggleMenuDrawer();">
+                    <div class="icon-box"><i data-lucide="home"></i></div>
+                    <span>Home Portal</span>
+                </button>
+                <button class="drawer-item" onclick="showPage('announcements-page'); toggleMenuDrawer();">
+                    <div class="icon-box"><i data-lucide="megaphone"></i></div>
+                    <span>Announcements</span>
+                </button>
+                <button class="drawer-item" onclick="showPage('leaks-page'); toggleMenuDrawer();">
+                    <div class="icon-box"><i data-lucide="folder-search"></i></div>
+                    <span>Leaks & Rumors</span>
+                </button>
+                
+                <div class="drawer-divider"></div>
+
+                <button class="drawer-item highlight-item" onclick="showPage('account-page'); toggleMenuDrawer();">
+                    <div class="icon-box"><i data-lucide="user-check"></i></div>
+                    <span>Account & Themes</span>
+                </button>
+            </div>
+
+            <div class="drawer-footer">
+                <p>Grow A Random Plant © 2026</p>
+            </div>
+        </div>
+    </div>
+    <div id="drawerOverlay" class="drawer-overlay" onclick="toggleMenuDrawer()"></div>
+
+    <!-- Main Views Container -->
+    <main class="container" id="app-container">
+
+        <!-- PAGE 1: PORTAL HOME -->
+        <section id="portal-page" class="page active">
+            <div class="gag-container">
+                <div class="gag-search-wrapper">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" placeholder="Search seeds, plants, codes..." />
+                </div>
+
+                <div class="gag-card">
+                    <div class="gag-card-hero">
+                        <div class="hero-logo-container">
+                            <div class="logo-ambient-glow"></div>
+                            <img src="assets/logo.png" alt="Grow A Random Plant Logo" class="gag-hero-logo" id="mainGameLogo" onerror="this.src='GameLogo.png';">
+                        </div>
+                        <h1 class="gag-title">GROW A RANDOM PLANT</h1>
+                    </div>
+
+                    <div class="gag-status-text">RELEASE SOON</div>
+
+                    <div class="gag-btn-row">
+                        <button class="gag-btn gag-btn-green" onclick="showPage('announcements-page')">
+                            <i data-lucide="megaphone"></i>
+                            <span>ANNOUNCEMENTS</span>
+                        </button>
+
+                        <button class="gag-btn gag-btn-blue" onclick="showPage('leaks-page')">
+                            <i data-lucide="folder-search"></i>
+                            <span>LEAKS</span>
+                        </button>
+                    </div>
+
+                    <div class="discord-footer-box">
+                        <a href="https://discord.gg/8GtZp9QTVb" target="_blank" rel="noopener noreferrer" class="discord-link">
+                            <i data-lucide="message-square"></i>
+                            <span>Join the Discord for more</span>
+                            <i data-lucide="external-link" class="external-icon"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE 2: ANNOUNCEMENTS PAGE -->
+        <section id="announcements-page" class="page news-page">
+            <div class="news-header-bar">
+                <button class="back-btn" onclick="showPage('portal-page')">
+                    <i data-lucide="arrow-left"></i>
+                </button>
+                <div>
+                    <span class="breadcrumb">Home / Announcements</span>
+                    <h2 class="news-title">📰 Grow A Random Plant News</h2>
+                    <p class="news-subtitle">Update log and official releases for <strong>Grow A Random Plant</strong>.</p>
+                </div>
+            </div>
+
+            <div class="dashboard-container">
+                <div class="dashboard-sidebar" id="announcements-list"></div>
+                <div class="dashboard-main" id="announcements-detail"></div>
+            </div>
+        </section>
+
+        <!-- PAGE 3: LEAKS PAGE -->
+        <section id="leaks-page" class="page news-page">
+            <div class="news-header-bar">
+                <button class="back-btn" onclick="showPage('portal-page')">
+                    <i data-lucide="arrow-left"></i>
+                </button>
+                <div>
+                    <span class="breadcrumb">Home / Leaks</span>
+                    <h2 class="news-title">👀 Classified Leaks & Rumors</h2>
+                    <p class="news-subtitle">Unreleased datamines, plant teasers, and upcoming mutations.</p>
+                </div>
+            </div>
+
+            <div class="dashboard-container">
+                <div class="dashboard-sidebar" id="leaks-list"></div>
+                <div class="dashboard-main" id="leaks-detail"></div>
+            </div>
+        </section>
+
+        <!-- PAGE 4: ACCOUNT MANAGEMENT & THEMES -->
+        <section id="account-page" class="page account-management-page">
+            <div class="news-header-bar">
+                <button class="back-btn" onclick="showPage('portal-page')">
+                    <i data-lucide="arrow-left"></i>
+                </button>
+                <div>
+                    <span class="breadcrumb">Home / Account & Settings</span>
+                    <h2 class="news-title">🛡️ Player Profile & Customization</h2>
+                    <p class="news-subtitle">Manage your linked Roblox profile and audio/visual settings.</p>
+                </div>
+            </div>
+
+            <div class="account-card-wrapper">
+                <!-- Unconnected State -->
+                <div id="accountUnconnected" class="account-state-card active">
+                    <div class="account-icon-badge">
+                        <i data-lucide="box"></i>
+                    </div>
+                    <h3>No Roblox Account Connected</h3>
+                    <p>Connect your Roblox account via OAuth to sync player stats.</p>
+                    
+                    <button class="gag-btn gag-btn-blue account-connect-btn" onclick="connectRobloxAccount()">
+                        <i data-lucide="shield-check"></i>
+                        <span>CONNECT WITH ROBLOX</span>
+                    </button>
+
+                    <!-- OAuth Debug Panel -->
+                    <div id="oauthDebugBox" class="oauth-debug-panel">
+                        <h4>🔧 OAuth Diagnostics & Setup Helper</h4>
+                        <p><strong>Configured Client ID:</strong> <span id="debugClientId">4037165407323325158</span></p>
+                        <p><strong>Current Browser Origin:</strong> <span id="debugOrigin"></span></p>
+                        <p><strong>Exact URI needed on Roblox Console:</strong> <span id="debugRedirectUri" class="highlight-uri"></span></p>
+                        <div class="debug-url-preview">
+                            <strong>Full Generated Auth URL:</strong>
+                            <textarea id="debugFullUrl" readonly rows="3"></textarea>
+                        </div>
+                        <div class="debug-actions">
+                            <button class="debug-btn" onclick="copyDebugUrl()">📋 Copy Exact Redirect URI</button>
+                            <button class="debug-btn debug-btn-accent" onclick="testDirectRedirect()">🚀 Launch Auth</button>
+                            <button class="debug-btn debug-btn-alt" onclick="openRobloxModal()">💬 Fallback Mock Login</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Connected State -->
+                <div id="accountConnected" class="account-state-card">
+                    <div class="connected-profile-header">
+                        <div class="account-avatar-large" id="accountAvatarLarge">
+                            <i data-lucide="user-check"></i>
+                        </div>
+                        <div class="account-details">
+                            <h3 id="accountUsernameText">Kianmeister</h3>
+                            <button class="edit-name-btn" onclick="openRobloxModal()">
+                                <i data-lucide="edit-2"></i> Edit Display Name
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="theme-customizer-box">
+                        <h4>🎨 Choose Visual Theme</h4>
+                        <div class="theme-picker-grid">
+                            <button class="theme-option-btn theme-dark-picker" onclick="setHubTheme('theme-dark-energized')">
+                                <span class="theme-dot"></span> Saturated Dark
+                            </button>
+                            <button class="theme-option-btn theme-light-picker" onclick="setHubTheme('theme-light-energized')">
+                                <span class="theme-dot"></span> Friendly Light
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="account-actions-box">
+                        <button class="gag-btn gag-btn-danger" onclick="unlinkRobloxAccount()">
+                            <i data-lucide="log-out"></i>
+                            <span>UNLINK ROBLOX ACCOUNT</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Scripts -->
+    <script src="scripts/nav.js"></script>
+    <script src="scripts/portal.js"></script>
+    <script src="scripts/announcements.js"></script>
+    <script src="scripts/leaks.js"></script>
+</body>
+</html>
