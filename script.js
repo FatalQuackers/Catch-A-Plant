@@ -1,12 +1,12 @@
 // --- CONFIGURATION ---
 const CLIENT_ID = '4037165407323325158';
 
-// Automatically detect environment for Redirect URI
+// Local port 3000 vs Live GitHub Pages URL
 const REDIRECT_URI = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3000/'
     : 'https://fatalquackers.github.io/PlayGarp/';
 
-// Live Render backend address
+// Local port 3000 vs Live Render backend URL
 const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3000'
     : 'https://playgarp-backend.onrender.com';
