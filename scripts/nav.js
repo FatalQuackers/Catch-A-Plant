@@ -146,16 +146,15 @@ function changeVolume(val) {
     if (audio) audio.volume = parseFloat(val);
 }
 
-/* Roblox OAuth - Updated for Live URL Support */
+/* Roblox OAuth - Dynamic Redirect */
 const ROBLOX_CLIENT_ID = '4037165407323325158';
 
 function getTargetRedirectUri() {
-    // Detect if we are testing locally
+    // Detect if testing locally or on live GitHub Pages
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         let port = window.location.port ? `:${window.location.port}` : ':5500';
         return `http://localhost${port}/`;
     }
-    // Return the live GitHub Pages URL for production
     return 'https://fatalquackers.github.io/Catch-A-Plant/';
 }
 
@@ -289,8 +288,16 @@ async function handleOAuthCallback() {
         showToast("Authenticating with Backend Server...");
         window.history.replaceState({}, document.title, window.location.pathname);
 
+        // Detect environment for Backend URL
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        
+        // IMPORTANT: REPLACE THE LIVE URL BELOW WITH YOUR ACTUAL HOSTED BACKEND (Render, Heroku, etc.)
+        const backendUrl = isLocal 
+            ? 'http://localhost:5000/api/auth/roblox' 
+            : 'https://your-live-backend.onrender.com/api/auth/roblox'; 
+
         try {
-            const res = await fetch('http://localhost:5000/api/auth/roblox', {
+            const res = await fetch(backendUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ code: code })
@@ -312,7 +319,8 @@ async function handleOAuthCallback() {
             }
         } catch (err) {
             console.error("Backend OAuth Error:", err);
-            showToast("Backend Server Offline (http://localhost:5000)");
+            // If the live server isn't set up yet, it will throw an error here.
+            showToast(isLocal ? "Backend Server Offline (localhost:5000)" : "Live Backend Server is Offline/Missing");
         }
     }
 }
