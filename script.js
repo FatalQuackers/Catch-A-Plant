@@ -1,12 +1,15 @@
 // --- CONFIGURATION ---
 const CLIENT_ID = '4037165407323325158';
 
-// Local port 3000 vs Live site redirect. Use window.location.origin so the client always sends an exact origin that can be registered in the Roblox app.
+// Compute redirect URI from the actual running page so it always matches the site origin+path
 const REDIRECT_URI = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:3000/'
-    : `${window.location.origin}/PlayGarp/`;
+    ? 'http://localhost:5500/'
+    : (() => {
+        let p = window.location.origin + window.location.pathname;
+        return p.endsWith('/') ? p : p + '/';
+    })();
 
-// Local port 3000 vs Live Render backend URL
+// Live backend URL
 const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3000'
     : 'https://playgarp-backend.onrender.com';
