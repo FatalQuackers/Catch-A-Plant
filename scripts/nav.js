@@ -291,10 +291,10 @@ async function handleOAuthCallback() {
         // Detect environment for Backend URL
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         
-        // IMPORTANT: REPLACE THE LIVE URL BELOW WITH YOUR ACTUAL HOSTED BACKEND (Render, Heroku, etc.)
+        // NOW POINTING TO YOUR LIVE RENDER BACKEND
         const backendUrl = isLocal 
             ? 'http://localhost:5000/api/auth/roblox' 
-            : 'https://your-live-backend.onrender.com/api/auth/roblox'; 
+            : 'https://playgarp-backend.onrender.com/api/auth/roblox'; 
 
         try {
             const res = await fetch(backendUrl, {
@@ -319,7 +319,6 @@ async function handleOAuthCallback() {
             }
         } catch (err) {
             console.error("Backend OAuth Error:", err);
-            // If the live server isn't set up yet, it will throw an error here.
             showToast(isLocal ? "Backend Server Offline (localhost:5000)" : "Live Backend Server is Offline/Missing");
         }
     }
