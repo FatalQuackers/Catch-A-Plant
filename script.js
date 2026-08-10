@@ -1,10 +1,10 @@
 // --- CONFIGURATION ---
 const CLIENT_ID = '4037165407323325158';
 
-// Local port 3000 vs Live GitHub Pages URL
+// Local port 3000 vs Live site redirect. Use window.location.origin so the client always sends an exact origin that can be registered in the Roblox app.
 const REDIRECT_URI = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3000/'
-    : 'https://fatalquackers.github.io/PlayGarp/';
+    : `${window.location.origin}/PlayGarp/`;
 
 // Local port 3000 vs Live Render backend URL
 const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -17,7 +17,6 @@ const BACKEND_URL = (window.location.hostname === 'localhost' || window.location
 function loginWithRoblox() {
     const authUrl = `https://apis.roblox.com/oauth/v1/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=openid%20profile`;
     window.location.href = authUrl;
-}
 }
 
 // Process OAuth Code returning from Roblox redirect
