@@ -217,13 +217,13 @@ function createCustomAuthModal() {
     `;
 
     modal.innerHTML = `
-        <div style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255,255,255,0.15); padding: 32px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.6); color: #fff; font-family: inherit;">
+        <div style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255,255,255,0.15); padding: 32px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; box-shadow:[...]
             <h3 style="margin-top: 0; font-size: 1.3rem;">Connect Roblox Profile</h3>
             <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 20px;">Enter your username for local sync:</p>
-            <input type="text" id="robloxInputName" placeholder="Roblox Username..." style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.4); color: #fff; margin-bottom: 20px; outline: none; font-size: 0.95rem;" />
+            <input type="text" id="robloxInputName" placeholder="Roblox Username..." style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: [...]
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button onclick="closeRobloxModal()" style="padding: 10px 18px; border-radius: 10px; border: none; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-weight: 700;">Cancel</button>
-                <button onclick="submitRobloxModal()" style="padding: 10px 18px; border-radius: 10px; border: none; background: #00ff88; color: #000; font-weight: 800; cursor: pointer;">Connect</button>
+                <button onclick="closeRobloxModal()" style="padding: 10px 18px; border-radius: 10px; border: none; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-weight: 70[...]
+                <button onclick="submitRobloxModal()" style="padding: 10px 18px; border-radius: 10px; border: none; background: #00ff88; color: #000; font-weight: 800; cursor: pointer;">Connect</[...]
             </div>
         </div>
     `;
@@ -275,7 +275,7 @@ async function handleOAuthCallback() {
         window.history.replaceState({}, document.title, window.location.pathname);
 
         try {
-            const res = await fetch('http://localhost:5000/api/auth/roblox', {
+            const res = await fetch('https://fatalquackers.github.io/Catch-A-Plant/api/auth/roblox', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ code: code })
@@ -297,7 +297,7 @@ async function handleOAuthCallback() {
             }
         } catch (err) {
             console.error("Backend OAuth Error:", err);
-            showToast("Backend Server Offline (http://localhost:5000)");
+            showToast("Backend Server Offline (https://fatalquackers.github.io/Catch-A-Plant/)");
         }
     }
 }
