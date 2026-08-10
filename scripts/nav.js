@@ -146,13 +146,17 @@ function changeVolume(val) {
     if (audio) audio.volume = parseFloat(val);
 }
 
-/* Roblox OAuth - Forced Localhost Standard */
+/* Roblox OAuth - Updated for Live URL Support */
 const ROBLOX_CLIENT_ID = '4037165407323325158';
 
 function getTargetRedirectUri() {
-    // Forces localhost instead of 127.0.0.1 to comply with Roblox OAuth rules
-    let port = window.location.port ? `:${window.location.port}` : ':5500';
-    return `http://localhost${port}/`;
+    // Detect if we are testing locally
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        let port = window.location.port ? `:${window.location.port}` : ':5500';
+        return `http://localhost${port}/`;
+    }
+    // Return the live GitHub Pages URL for production
+    return 'https://fatalquackers.github.io/Catch-A-Plant/';
 }
 
 function buildRobloxAuthUrl() {
@@ -217,13 +221,13 @@ function createCustomAuthModal() {
     `;
 
     modal.innerHTML = `
-        <div style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255,255,255,0.15); padding: 32px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; box-shadow:[...]
+        <div style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255,255,255,0.15); padding: 32px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.6); color: #fff; font-family: inherit;">
             <h3 style="margin-top: 0; font-size: 1.3rem;">Connect Roblox Profile</h3>
             <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 20px;">Enter your username for local sync:</p>
-            <input type="text" id="robloxInputName" placeholder="Roblox Username..." style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: [...]
+            <input type="text" id="robloxInputName" placeholder="Roblox Username..." style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.4); color: #fff; margin-bottom: 20px; outline: none; font-size: 0.95rem;" />
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button onclick="closeRobloxModal()" style="padding: 10px 18px; border-radius: 10px; border: none; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-weight: 70[...]
-                <button onclick="submitRobloxModal()" style="padding: 10px 18px; border-radius: 10px; border: none; background: #00ff88; color: #000; font-weight: 800; cursor: pointer;">Connect</[...]
+                <button onclick="closeRobloxModal()" style="padding: 10px 18px; border-radius: 10px; border: none; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-weight: 700;">Cancel</button>
+                <button onclick="submitRobloxModal()" style="padding: 10px 18px; border-radius: 10px; border: none; background: #00ff88; color: #000; font-weight: 800; cursor: pointer;">Connect</button>
             </div>
         </div>
     `;
@@ -256,12 +260,23 @@ function submitRobloxModal() {
 
 function checkSavedAccount() {
     const savedUser = localStorage.getItem('roblox_user');
+    const navAvatarContainer = document.getElementById('navAvatarContainer');
+
     if (savedUser) {
         try {
             const userObj = JSON.parse(savedUser);
             updateUIForConnectedAccount(userObj);
         } catch (e) {
             console.error("User state read error:", e);
+            if (navAvatarContainer) {
+                navAvatarContainer.innerHTML = QUESTION_MARK_SVG;
+                refreshIcons();
+            }
+        }
+    } else {
+        if (navAvatarContainer) {
+            navAvatarContainer.innerHTML = QUESTION_MARK_SVG;
+            refreshIcons();
         }
     }
 }
@@ -275,7 +290,7 @@ async function handleOAuthCallback() {
         window.history.replaceState({}, document.title, window.location.pathname);
 
         try {
-            const res = await fetch('https://fatalquackers.github.io/Catch-A-Plant/api/auth/roblox', {
+            const res = await fetch('http://localhost:5000/api/auth/roblox', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ code: code })
@@ -297,50 +312,10 @@ async function handleOAuthCallback() {
             }
         } catch (err) {
             console.error("Backend OAuth Error:", err);
-            showToast("Backend Server Offline (https://fatalquackers.github.io/Catch-A-Plant/)");
+            showToast("Backend Server Offline (http://localhost:5000)");
         }
     }
 }
-
-function updateUIForConnectedAccount(userObj) {
-    const navUsername = document.getElementById('navUsername');
-    const accountUsernameText = document.getElementById('accountUsernameText');
-    const unconnectedCard = document.getElementById('accountUnconnected');
-    const connectedCard = document.getElementById('accountConnected');
-
-    const name = userObj.username || userObj.displayName || "Connected Player";
-
-    if (navUsername) navUsername.innerText = name.toUpperCase();
-    if (accountUsernameText) accountUsernameText.innerText = name;
-
-    if (unconnectedCard && connectedCard) {
-        unconnectedCard.style.display = 'none';
-        connectedCard.style.display = 'block';
-    }
-}
-
-function unlinkRobloxAccount() {
-    localStorage.removeItem('roblox_user');
-    
-    const navUsername = document.getElementById('navUsername');
-    const unconnectedCard = document.getElementById('accountUnconnected');
-    const connectedCard = document.getElementById('accountConnected');
-
-    if (navUsername) navUsername.innerText = "CONNECT ROBLOX";
-    if (unconnectedCard && connectedCard) {
-        unconnectedCard.style.display = 'block';
-        connectedCard.style.display = 'none';
-    }
-
-    showToast("Unlinked Roblox Account");
-}
-
-/* ==========================================
-   DYNAMIC BADGE AVATAR & USER STATE
-   ========================================== */
-
-// Default SVG Question Mark icon for logged-out state
-const QUESTION_MARK_SVG = `<i data-lucide="help-circle" class="logged-out-question"></i>`;
 
 function updateUIForConnectedAccount(userObj) {
     const navUsername = document.getElementById('navUsername');
@@ -359,7 +334,7 @@ function updateUIForConnectedAccount(userObj) {
         if (userObj.avatarUrl) {
             navAvatarContainer.innerHTML = `<img src="${userObj.avatarUrl}" alt="${name}" class="badge-logo-img">`;
         } else if (userObj.sub || userObj.userId) {
-            // Fallback: Fetch headshot directly via Roblox Thumbnails API if avatarUrl wasn't provided
+            // Fallback: Fetch headshot directly via Roblox Thumbnails API
             const userId = userObj.sub || userObj.userId;
             const headshotUrl = `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png&isCircular=true`;
             
@@ -399,7 +374,6 @@ function unlinkRobloxAccount() {
 
     if (navUsername) navUsername.innerText = "CONNECT ROBLOX";
     
-    // Set badge to Question Mark icon when unlinked/logged out
     if (navAvatarContainer) {
         navAvatarContainer.innerHTML = QUESTION_MARK_SVG;
         refreshIcons();
@@ -413,26 +387,5 @@ function unlinkRobloxAccount() {
     showToast("Unlinked Roblox Account");
 }
 
-function checkSavedAccount() {
-    const savedUser = localStorage.getItem('roblox_user');
-    const navAvatarContainer = document.getElementById('navAvatarContainer');
-
-    if (savedUser) {
-        try {
-            const userObj = JSON.parse(savedUser);
-            updateUIForConnectedAccount(userObj);
-        } catch (e) {
-            console.error("User state read error:", e);
-            if (navAvatarContainer) {
-                navAvatarContainer.innerHTML = QUESTION_MARK_SVG;
-                refreshIcons();
-            }
-        }
-    } else {
-        // Ensure default question mark shows on initial load
-        if (navAvatarContainer) {
-            navAvatarContainer.innerHTML = QUESTION_MARK_SVG;
-            refreshIcons();
-        }
-    }
-}
+// Default SVG Question Mark icon for logged-out state
+const QUESTION_MARK_SVG = `<i data-lucide="help-circle" class="logged-out-question"></i>`;
