@@ -2,6 +2,23 @@
    GROW A RANDOM PLANT - NAV & CORE MODULE
    ========================================== */
 
+// --- CONFIGURATION ---
+const ROBLOX_CLIENT_ID = '4037165407323325158';
+
+// Compute redirect URI from the actual running page so it always matches the site origin+path
+const REDIRECT_URI = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:5500/'
+    : (() => {
+        let p = window.location.origin + window.location.pathname;
+        return p.endsWith('/') ? p : p + '/';
+    })();
+
+// Live backend URL vs Local
+const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3000'
+    : 'https://playgarp-backend.onrender.com';
+
+
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     checkSavedAccount();
@@ -146,21 +163,9 @@ function changeVolume(val) {
     if (audio) audio.volume = parseFloat(val);
 }
 
-/* Roblox OAuth - Dynamic Redirect */
-const ROBLOX_CLIENT_ID = '4037165407323325158';
-
-function getTargetRedirectUri() {
-    // Detect if testing locally or on live GitHub Pages
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        let port = window.location.port ? `:${window.location.port}` : ':5500';
-        return `http://localhost${port}/`;
-    }
-    return 'https://fatalquackers.github.io/Catch-A-Plant/';
-}
-
+/* Roblox OAuth - Using configuration constants */
 function buildRobloxAuthUrl() {
-    const redirectUri = getTargetRedirectUri();
-    const encodedRedirect = encodeURIComponent(redirectUri);
+    const encodedRedirect = encodeURIComponent(REDIRECT_URI);
     const scope = encodeURIComponent('openid profile');
     return `https://apis.roblox.com/oauth/v1/authorize?client_id=${ROBLOX_CLIENT_ID}&response_type=code&redirect_uri=${encodedRedirect}&scope=${scope}`;
 }
@@ -168,7 +173,6 @@ function buildRobloxAuthUrl() {
 function updateDebugPanel() {
     const fullUrl = buildRobloxAuthUrl();
     const origin = window.location.origin;
-    const redirectUri = getTargetRedirectUri();
 
     const debugClientIdEl = document.getElementById('debugClientId');
     const debugOriginEl = document.getElementById('debugOrigin');
@@ -177,7 +181,7 @@ function updateDebugPanel() {
 
     if (debugClientIdEl) debugClientIdEl.innerText = ROBLOX_CLIENT_ID;
     if (debugOriginEl) debugOriginEl.innerText = origin;
-    if (debugRedirectUriEl) debugRedirectUriEl.innerText = redirectUri;
+    if (debugRedirectUriEl) debugRedirectUriEl.innerText = REDIRECT_URI;
     if (debugFullUrlEl) debugFullUrlEl.value = fullUrl;
 }
 
@@ -198,9 +202,8 @@ function testDirectRedirect() {
 }
 
 function copyDebugUrl() {
-    const redirectUri = getTargetRedirectUri();
-    navigator.clipboard.writeText(redirectUri);
-    showToast(`Copied "${redirectUri}" to Clipboard!`);
+    navigator.clipboard.writeText(REDIRECT_URI);
+    showToast(`Copied "${REDIRECT_URI}" to Clipboard!`);
 }
 
 function createCustomAuthModal() {
@@ -248,7 +251,7 @@ function submitRobloxModal() {
     const input = document.getElementById('robloxInputName');
     if (input && input.value.trim() !== "") {
         const cleanName = input.value.trim();
-        const userObj = { username: cleanName };
+        const userObj = { username: cleanName, preferred_username: cleanName };
         localStorage.setItem('roblox_user', JSON.stringify(userObj));
         updateUIForConnectedAccount(userObj);
         closeRobloxModal();
@@ -280,46 +283,41 @@ function checkSavedAccount() {
     }
 }
 
+/* Merged handleOAuthCallback using proper backend URLs & Payload */
 async function handleOAuthCallback() {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
 
     if (code) {
         showToast("Authenticating with Backend Server...");
+        
+        // Clean up the URL bar
         window.history.replaceState({}, document.title, window.location.pathname);
 
-        // Detect environment for Backend URL
-        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        
-        // NOW POINTING TO YOUR LIVE RENDER BACKEND
-        const backendUrl = isLocal 
-            ? 'http://localhost:5000/api/auth/roblox' 
-            : 'https://playgarp-backend.onrender.com/api/auth/roblox'; 
-
         try {
-            const res = await fetch(backendUrl, {
+            const res = await fetch(`${BACKEND_URL}/api/oauth/callback`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: code })
+                body: JSON.stringify({ code: code, redirect_uri: REDIRECT_URI })
             });
 
             const data = await res.json();
 
-            if (res.ok) {
-                const userObj = {
-                    username: data.username,
-                    displayName: data.displayName,
-                    avatarUrl: data.avatarUrl
-                };
+            // Handle successful auth (accepts 'data.user' or 'data' directly depending on backend response)
+            if (res.ok && (data.user || data.sub || data.username)) {
+                const userObj = data.user || data; 
                 localStorage.setItem('roblox_user', JSON.stringify(userObj));
                 updateUIForConnectedAccount(userObj);
-                showToast(`Authenticated as ${data.username}!`);
+                
+                const displayName = userObj.preferred_username || userObj.username || "Player";
+                showToast(`Authenticated as ${displayName}!`);
             } else {
+                console.error('Authentication error:', data);
                 showToast(`Auth Failed: ${data.error || 'Server rejected token'}`);
             }
         } catch (err) {
             console.error("Backend OAuth Error:", err);
-            showToast(isLocal ? "Backend Server Offline (localhost:5000)" : "Live Backend Server is Offline/Missing");
+            showToast("Backend Server is Offline or Connection Refused");
         }
     }
 }
@@ -331,15 +329,16 @@ function updateUIForConnectedAccount(userObj) {
     const connectedCard = document.getElementById('accountConnected');
     const navAvatarContainer = document.getElementById('navAvatarContainer');
 
-    const name = userObj.username || userObj.displayName || "Connected Player";
+    const name = userObj.preferred_username || userObj.username || userObj.displayName || "Connected Player";
 
     if (navUsername) navUsername.innerText = name.toUpperCase();
     if (accountUsernameText) accountUsernameText.innerText = name;
 
     // Update Avatar Container with User Avatar
     if (navAvatarContainer) {
-        if (userObj.avatarUrl) {
-            navAvatarContainer.innerHTML = `<img src="${userObj.avatarUrl}" alt="${name}" class="badge-logo-img">`;
+        if (userObj.avatarUrl || userObj.picture) {
+            const imgUrl = userObj.avatarUrl || userObj.picture;
+            navAvatarContainer.innerHTML = `<img src="${imgUrl}" alt="${name}" class="badge-logo-img" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
         } else if (userObj.sub || userObj.userId) {
             // Fallback: Fetch headshot directly via Roblox Thumbnails API
             const userId = userObj.sub || userObj.userId;
@@ -349,7 +348,7 @@ function updateUIForConnectedAccount(userObj) {
                 .then(res => res.json())
                 .then(data => {
                     if (data.data && data.data[0] && data.data[0].imageUrl) {
-                        navAvatarContainer.innerHTML = `<img src="${data.data[0].imageUrl}" alt="${name}" class="badge-logo-img">`;
+                        navAvatarContainer.innerHTML = `<img src="${data.data[0].imageUrl}" alt="${name}" class="badge-logo-img" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                     } else {
                         navAvatarContainer.innerHTML = QUESTION_MARK_SVG;
                         refreshIcons();
