@@ -20,7 +20,6 @@ const ALLOWED_REDIRECT_URIS = process.env.ALLOWED_REDIRECT_URIS || '';
 const normalize = (u) => {
     if (!u) return u;
     try {
-        // keep as-is if it's not a URL
         return u.endsWith('/') ? u.slice(0, -1) : u;
     } catch (e) {
         return u;
@@ -51,14 +50,20 @@ app.post('/api/oauth/callback', async (req, res) => {
         // Determine which redirect URI to use for the token exchange.
         // Priority:
         // 1) If NODE_ENV === 'development' and a client-provided redirect_uri exists -> use it (developer convenience)
-        // 2) If client-provided redirect_uri is present and is listed in ALLOWED_REDIRECT_URIS -> use it (safe whitelist)
-        // 3) Otherwise use SERVER_REDIRECT_URI (recommended for production)
+        // 2) If client-provided redirect_uri is localhost -> allow it for testing (temporary)
+        // 3) If client-provided redirect_uri is present and is listed in ALLOWED_REDIRECT_URIS -> use it (safe whitelist)
+        // 4) Otherwise use SERVER_REDIRECT_URI (recommended for production)
 
         let redirectToUse = null;
+
+        const isLocalRedirect = redirect_uri && (redirect_uri.startsWith('http://localhost') || redirect_uri.startsWith('http://127.0.0.1'));
 
         if (NODE_ENV === 'development' && redirect_uri) {
             redirectToUse = redirect_uri;
             console.log('Using client redirect (development) ->', redirectToUse);
+        } else if (isLocalRedirect) {
+            redirectToUse = redirect_uri;
+            console.log('Using client redirect (localhost allowed) ->', redirectToUse);
         } else if (redirect_uri && allowedSet.has(normalize(redirect_uri))) {
             redirectToUse = redirect_uri;
             console.log('Using client redirect (whitelisted) ->', redirectToUse);
