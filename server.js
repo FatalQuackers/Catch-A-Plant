@@ -10,9 +10,29 @@ app.use(express.json());
 
 const CLIENT_ID = process.env.ROBLOX_CLIENT_ID;
 const CLIENT_SECRET = process.env.ROBLOX_CLIENT_SECRET;
-// Server-side configured redirect URI (recommended). Do NOT rely on the client's redirect_uri in production.
+// Server-side configured redirect URI (recommended).
 const SERVER_REDIRECT_URI = process.env.ROBLOX_REDIRECT_URI;
 const NODE_ENV = process.env.NODE_ENV || 'production';
+// Optional whitelist of redirect URIs (comma-separated) to allow client-provided redirects in production for testing.
+const ALLOWED_REDIRECT_URIS = process.env.ALLOWED_REDIRECT_URIS || '';
+
+// Build a normalized set for efficient checks (normalize by removing trailing slash)
+const normalize = (u) => {
+    if (!u) return u;
+    try {
+        // keep as-is if it's not a URL
+        return u.endsWith('/') ? u.slice(0, -1) : u;
+    } catch (e) {
+        return u;
+    }
+};
+
+const allowedSet = new Set(
+    ALLOWED_REDIRECT_URIS.split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map(normalize)
+);
 
 // Root endpoint to verify server is active
 app.get('/', (req, res) => {
@@ -28,12 +48,31 @@ app.post('/api/oauth/callback', async (req, res) => {
     }
 
     try {
-        // Use server-configured redirect URI in production. Allow client-provided redirect during development only.
-        const redirectToUse = (NODE_ENV === 'development' && redirect_uri) ? redirect_uri : SERVER_REDIRECT_URI;
+        // Determine which redirect URI to use for the token exchange.
+        // Priority:
+        // 1) If NODE_ENV === 'development' and a client-provided redirect_uri exists -> use it (developer convenience)
+        // 2) If client-provided redirect_uri is present and is listed in ALLOWED_REDIRECT_URIS -> use it (safe whitelist)
+        // 3) Otherwise use SERVER_REDIRECT_URI (recommended for production)
+
+        let redirectToUse = null;
+
+        if (NODE_ENV === 'development' && redirect_uri) {
+            redirectToUse = redirect_uri;
+            console.log('Using client redirect (development) ->', redirectToUse);
+        } else if (redirect_uri && allowedSet.has(normalize(redirect_uri))) {
+            redirectToUse = redirect_uri;
+            console.log('Using client redirect (whitelisted) ->', redirectToUse);
+        } else {
+            redirectToUse = SERVER_REDIRECT_URI;
+            console.log('Using server-configured redirect ->', redirectToUse);
+        }
 
         if (!redirectToUse) {
-            return res.status(400).json({ error: 'No redirect URI configured on server' });
+            return res.status(400).json({ error: 'No redirect URI configured on server and none allowed from client' });
         }
+
+        // DEBUG LOG: print the redirectToUse so we can confirm what's being sent to Roblox
+        console.log('SERVER redirectToUse ->', redirectToUse);
 
         // 1. Exchange authorization code for access token
         const tokenParams = new URLSearchParams({
