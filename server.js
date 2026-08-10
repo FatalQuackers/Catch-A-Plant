@@ -10,6 +10,9 @@ app.use(express.json());
 
 const CLIENT_ID = process.env.ROBLOX_CLIENT_ID;
 const CLIENT_SECRET = process.env.ROBLOX_CLIENT_SECRET;
+// Server-side configured redirect URI (recommended). Do NOT rely on the client's redirect_uri in production.
+const SERVER_REDIRECT_URI = process.env.ROBLOX_REDIRECT_URI;
+const NODE_ENV = process.env.NODE_ENV || 'production';
 
 // Root endpoint to verify server is active
 app.get('/', (req, res) => {
@@ -25,13 +28,20 @@ app.post('/api/oauth/callback', async (req, res) => {
     }
 
     try {
+        // Use server-configured redirect URI in production. Allow client-provided redirect during development only.
+        const redirectToUse = (NODE_ENV === 'development' && redirect_uri) ? redirect_uri : SERVER_REDIRECT_URI;
+
+        if (!redirectToUse) {
+            return res.status(400).json({ error: 'No redirect URI configured on server' });
+        }
+
         // 1. Exchange authorization code for access token
         const tokenParams = new URLSearchParams({
             client_id: CLIENT_ID,
             client_secret: CLIENT_SECRET,
             grant_type: 'authorization_code',
             code: code,
-            redirect_uri: redirect_uri
+            redirect_uri: redirectToUse
         });
 
         const tokenResponse = await fetch('https://apis.roblox.com/oauth/v1/token', {
